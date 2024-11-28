@@ -55,6 +55,16 @@ const rechargeSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  
+  admin_number: {
+    type: String,
+    required: true
+  },
+  investor_id: {
+    type: String,
+    required: true
+  },
+
   balance: {
     type: Number,
     default: 0
@@ -77,5 +87,5 @@ const rechargeSchema = new mongoose.Schema({
   timestamps: true
 });
 
-const RechargeModel = mongoose.model('Recharge', rechargeSchema);
-module.exports = RechargeModel;
+const BuyPackageModel = mongoose.model('BuyPackage', rechargeSchema);
+module.exports = BuyPackageModel;

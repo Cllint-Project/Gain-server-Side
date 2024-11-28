@@ -1,12 +1,12 @@
-const RechargeModel = require("../models/rechargeModel");
+const BuyPackageModel = require("../models/BuyPackageModel");
 
 
-exports.submitRechargeController = async (req, res) => {
+exports.submitInvestController = async (req, res) => {
     try {
 
-        const data = req.body;
-        console.log(data,'dshfjkhdfhdh')
-      const user = await RechargeModel.create(data);
+      const data = req.body;
+      console.log(data,8)
+      const user = await BuyPackageModel.create(data);
       res.json({ 
         message: 'recharged successfully',
         // data: user
