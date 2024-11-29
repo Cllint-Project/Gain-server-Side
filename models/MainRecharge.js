@@ -31,7 +31,7 @@ const rechargeSchema = new mongoose.Schema({
   },
   recharge_status: {
     type: String,
-    enum: ['pending', 'success', 'failed'],
+    enum: ['pending', 'approved', 'rejected'],
     default: 'pending'
   },
   transaction_id: {

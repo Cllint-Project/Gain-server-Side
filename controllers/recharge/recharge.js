@@ -7,6 +7,7 @@ exports.submitRechargeController = async (req, res) => {
     const user = await MainRechargeModel.create(data);
     // console.log(user ,'in submite')
     res.json({
+      success: true,
       message: "recharged successfully",
       data: user,
     });
@@ -28,5 +29,34 @@ exports.getRechargeController = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+
+exports.getAllRechargeController = async (req, res) => {
+  try {
+    const { status } = req.query;
+    let query = {};
+
+    // Add status filter if provided and not 'all'
+    if (status && status !== "all") {
+      query.recharge_status = status;
+    }
+
+    const recharges = await MainRechargeModel.find(query).sort({
+      createdAt: -1,
+    }); // Sort by newest first
+
+    res.status(200).json({
+      success: true,
+      message: "recharges retrieved successfully",
+      data: recharges,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch recharges",
+      error: error.message,
+    });
   }
 };

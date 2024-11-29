@@ -1,26 +1,33 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
 // Generate JWT token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
+    expiresIn: "1d",
   });
 };
 
 // Register a new user
 exports.register = async (req, res) => {
   try {
-    const { username, phoneNumber, password, referralCode } = req.body;
-console.log(req.body)
+    const { username, phoneNumber, password, referralCode, profileImage } =
+      req.body;
+    console.log(username, phoneNumber, password, referralCode, profileImage,16);
+
+    if(!username | !phoneNumber | !password| !referralCode |!profileImage){
+      return res.status(400).json({
+        message: "Please fill all inputs",
+      });
+    }
     // Check if user already exists
-    const existingUser = await User.findOne({ 
-      $or: [{ username }, { phoneNumber }] 
+    const existingUser = await User.findOne({
+      $or: [{ username }, { phoneNumber }],
     });
 
     if (existingUser) {
-      return res.status(400).json({ 
-        message: 'User already exists with this username or phone number' 
+      return res.status(400).json({
+        message: "User already exists with this username or phone number",
       });
     }
 
@@ -28,25 +35,27 @@ console.log(req.body)
     const newUser = new User({
       username,
       phoneNumber,
-      password
+      password,
+      profileImage,
     });
 
     // Handle referral if code is provided
     if (referralCode) {
       const referrer = await User.findOne({ referralCode });
-      
+
       if (!referrer) {
-        return res.status(400).json({ message: 'Invalid referral code' });
+        return res.status(400).json({ message: "Invalid referral code" });
       }
 
       // Set referrer
       newUser.referredBy = referrer._id;
+      newUser.balance += 60;
 
       // Update referrer's stats
       referrer.referralCount += 1;
-      referrer.referralEarnings += 50; // Bonus amount for referral
-      referrer.balance += 50;
-      
+      // referrer.referralEarnings += 60; // Bonus amount for referral
+      // referrer.balance += 60;
+
       await referrer.save();
     }
 
@@ -57,25 +66,28 @@ console.log(req.body)
     const token = generateToken(newUser._id);
 
     // Get populated user data
-    const populatedUser = await User.findById(newUser._id)
-      .populate('referredBy', 'username referralCode');
+    const populatedUser = await User.findById(newUser._id).populate(
+      "referredBy",
+      "username referralCode"
+    );
 
     res.status(201).json({
       success: true,
       data: {
         _id: populatedUser._id,
         username: populatedUser.username,
+        profileImage: populatedUser.profileImage,
         phoneNumber: populatedUser.phoneNumber,
         referralCode: populatedUser.referralCode,
         referredBy: populatedUser.referredBy,
-        token
-      }
+        token,
+      },
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ 
-      message: 'Error registering user', 
-      error: error.message 
+    console.error("Registration error:", error);
+    res.status(500).json({
+      message: "Error registering user",
+      error: error.message,
     });
   }
 };
@@ -86,11 +98,13 @@ exports.login = async (req, res) => {
     const { phoneNumber, password } = req.body;
 
     // Find user and populate referral info
-    const user = await User.findOne({ phoneNumber })
-      .populate('referredBy', 'username referralCode');
+    const user = await User.findOne({ phoneNumber }).populate(
+      "referredBy",
+      "username referralCode"
+    );
 
     if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     const token = generateToken(user._id);
@@ -100,46 +114,20 @@ exports.login = async (req, res) => {
       data: {
         _id: user._id,
         username: user.username,
+        profileImage: user.profileImage,
         phoneNumber: user.phoneNumber,
         referralCode: user.referralCode,
         referredBy: user.referredBy,
         balance: user.balance,
         referralCount: user.referralCount,
-        referralEarnings: user.referralEarnings,
-        token
-      }
+        token,
+      },
     });
   } catch (error) {
-    res.status(500).json({ 
-      message: 'Login error', 
-      error: error.message 
+    res.status(500).json({
+      message: "Login error",
+      error: error.message,
     });
   }
 };
 
-// Get referral statistics
-exports.getReferralStats = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id)
-      .populate('referredBy', 'username referralCode');
-
-    const referrals = await User.find({ referredBy: user._id })
-      .select('username phoneNumber createdAt');
-
-    res.json({
-      success: true,
-      data: {
-        referralCode: user.referralCode,
-        referralCount: user.referralCount,
-        referralEarnings: user.referralEarnings,
-        referredBy: user.referredBy,
-        referrals
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      message: 'Error fetching referral stats', 
-      error: error.message 
-    });
-  }
-};

@@ -118,6 +118,36 @@ const createWithdraw = async (req, res) => {
   }
 };
 
+
+const getWithdrawals = async (req, res) => {
+  try {
+    const { status } = req.query;
+    let query = {};
+
+    // Add status filter if provided and not 'all'
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    const withdrawals = await WithdrawModel.find(query)
+      .sort({ createdAt: -1 }); // Sort by newest first
+
+    res.status(200).json({
+      success: true,
+      message: 'Withdrawals retrieved successfully',
+      data: withdrawals
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch withdrawals',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
-  createWithdraw
+  createWithdraw,
+  getWithdrawals
 };

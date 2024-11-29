@@ -2,9 +2,9 @@ const { redeemCoupon, createCoupon } = require("./couponServices");
 
 const createSecretCoupon = async (req, res) => {
   try {
-    const { code, expirationMinutes = 5, adminId} = req.body;
+    const { code, expirationMinutes = 5, adminId } = req.body;
     // const adminId = req.user._id;
-
+    console.log(code, expirationMinutes, adminId);
     const coupon = await createCoupon(code, expirationMinutes, adminId);
 
     res.status(201).json({
@@ -26,7 +26,7 @@ const createSecretCoupon = async (req, res) => {
 
 const redeemUserCoupon = async (req, res) => {
   try {
-    const { code , userId} = req.body;
+    const { code, userId } = req.body;
     // const userId = req.user._id;
 
     const updatedUser = await redeemCoupon(code, userId);
@@ -46,6 +46,6 @@ const redeemUserCoupon = async (req, res) => {
   }
 };
 
-const couponController = {createSecretCoupon,redeemUserCoupon};
+const couponController = { createSecretCoupon, redeemUserCoupon };
 
 module.exports = couponController;

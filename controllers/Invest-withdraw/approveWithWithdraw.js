@@ -1,45 +1,59 @@
 const User = require("../../models/User");
 const WithdrawModel = require("../../models/Withdraw");
 
-const approveWithdraw = async (req, res) => {
+exports.approveWithdraw = async (req, res) => {
   try {
-    const { withdraw_id, status } = req.body;
-
+    const { user_id, withdraw_id, status } = req.body;
+console.log(req.body, 7)
     // Check if withdrawal exists
-    const withdraw = await WithdrawModel.findOne({ user_id: withdraw_id });
+    const withdraw = await WithdrawModel.findOne({ _id: withdraw_id });
     if (!withdraw) {
       return res.status(404).json({
         success: false,
         message: "Withdrawal request not found",
       });
     }
+    console.log(withdraw, 16)
 
-    const _id = withdraw.user_id;
-    // console.log("withdraw", _id);
-
-    // Find the user associated with the withdrawal
-    const user = await User.findOne({ _id });
+    // Find the user
+    const user = await User.findOne({ _id: user_id });
     if (!user) {
       return res.status(404).json({
         success: false,
         message: "User not found",
       });
     }
-    console.log("withdraw", user._id);
+
+    console.log(user, 27)
 
     if (status === "approved") {
+      // Convert amount to number and ensure it's valid
+      const deductAmount = Number(withdraw.pending_balance);
+      if (isNaN(deductAmount)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid withdrawal amount",
+        });
+      }
+
+      // Check if user has sufficient balance
+      if (user.balance < deductAmount) {
+        return res.status(400).json({
+          success: false,
+          message: "Insufficient balance",
+        });
+      }
+
       // Deduct amount from user balance
       const newUser = await User.findOneAndUpdate(
-        { _id: user._id},  
+        { _id: user_id },
         {
-          $inc: { balance: -withdraw.pending_balance },
+          $inc: { balance: -deductAmount },
         },
-        { new: true, runValidators: true } 
+        { new: true, runValidators: true }
       );
-    //   console.log('newuser', newUser)
 
       withdraw.status = "approved";
-      withdraw.pending_balance = 0;
       await withdraw.save();
 
       res.status(200).json({
@@ -48,9 +62,7 @@ const approveWithdraw = async (req, res) => {
         data: withdraw,
       });
     } else if (status === "rejected") {
-      // Reject withdrawal request
       withdraw.status = "rejected";
-      withdraw.pending_balance = 0;
       await withdraw.save();
 
       res.status(200).json({
@@ -73,6 +85,3 @@ const approveWithdraw = async (req, res) => {
   }
 };
 
-module.exports = {
-  approveWithdraw,
-};

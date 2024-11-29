@@ -7,11 +7,20 @@ const userSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  profileImage: { 
+    type: String,
+    required: true
+  },
   phoneNumber: { 
     type: String, 
     required: true, 
     unique: true,
     trim: true
+  },
+  role: { 
+    type: String, 
+    enum: ['admin', 'normal-user'],
+    default: 'normal-user'
   },
   password: { 
     type: String,
@@ -37,10 +46,10 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  referralEarnings: {
-    type: Number,
-    default: 0
-  },
+  // referralEarnings: {
+  //   type: Number,
+  //   default: 0
+  // },
   createdAt: { 
     type: Date, 
     default: Date.now 

@@ -12,7 +12,7 @@ exports.getTeamByUserId = async (req, res) => {
 
     // Find team members (users who were referred by this user)
     const teamMembers = await User.find({ referredBy: userId })
-      .select("username phoneNumber balance createdAt")
+      .select("username phoneNumber balance createdAt profileImage")
       .sort({ createdAt: -1 });
     console.log(teamMembers);
     res.status(200).json({

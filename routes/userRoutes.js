@@ -10,12 +10,15 @@ const {
   getAInvestDetailsController
 } = require('../controllers/userController');
 const {submitInvestController } = require('../controllers/rechargeController');
-const { submitRechargeController, getRechargeController } = require('../controllers/recharge/recharge');
+const { submitRechargeController, getRechargeController, getAllRechargeController } = require('../controllers/recharge/recharge');
 const { getTeamByUserId } = require('../controllers/user/getUserByPhone');
 const { getMyPackages, claimPackageIncome } = require('../controllers/Daily-claim/claim');
-const { approveWithdraw } = require('../controllers/Invest-withdraw/approveWithWithdraw');
-const { createWithdraw } = require('../controllers/Invest-withdraw/withdrawController');
+const {  getWithdrawals, createWithdraw } = require('../controllers/Invest-withdraw/withdrawController');
 const couponController = require('../controllers/Coupon/couponController');
+const { getAllUser } = require('../controllers/user/getAlluser');
+const { updateUserRole } = require('../controllers/user/updateUserRole');
+const { approveWithdraw } = require('../controllers/Invest-withdraw/approveWithWithdraw');
+const { approveRecharge } = require('../controllers/recharge/approvedRecharge');
 
 
 // router.use(protect);
@@ -24,7 +27,7 @@ router.get('/profile', getUserProfile);
 router.get('/transactions', getUserTransactions);
 router.put('/vip-status', updateVipStatus);
 
-
+// upload invest
 router.post('/invest', InvestController);
 router.get('/get-invest-data', getInvestDataController);
 router.get('/get-invest-data/:Id', getAInvestDetailsController);
@@ -35,9 +38,10 @@ router.post('/submit-invest', submitInvestController);
 // recharge
 router.post('/submit-recharge', submitRechargeController);
 router.get('/get-recharge-data', getRechargeController);
-// update recharge or invest package
-// router.put('/update-recharge', updateRechargeController);
+router.get('/get-AllRecharge-data', getAllRechargeController);
+router.post('/approve-recharge', approveRecharge);
 
+// team
 router.get('/team/:id', getTeamByUserId);
 
 // recharge related
@@ -46,13 +50,17 @@ router.get('/claim-daily/:Investor_id', getMyPackages);
 
 //withdraw
 router.post('/withdraw', createWithdraw);
-// Route for admin to approve/reject withdrawal
+router.get('/getWithdraw', getWithdrawals);
 router.put('/admin/withdraw/approve', approveWithdraw);
-
 
 // Admin route to create secret coupon
 router.post('/admin/coupon', couponController.createSecretCoupon);
 // User route to redeem coupon
 router.post('/redeem-coupon', couponController.redeemUserCoupon);
 
+
+// dashboard admin route
+router.get("/getUsers", getAllUser)
+// user role update
+router.put("/update-role", updateUserRole);
 module.exports = router;
