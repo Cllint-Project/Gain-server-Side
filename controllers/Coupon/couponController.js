@@ -28,7 +28,7 @@ const redeemUserCoupon = async (req, res) => {
   try {
     const { code, userId } = req.body;
     // const userId = req.user._id;
-
+console.log(code, userId,31)
     const updatedUser = await redeemCoupon(code, userId);
 
     res.status(200).json({
