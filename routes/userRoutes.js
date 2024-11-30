@@ -21,13 +21,8 @@ const { approveWithdraw } = require('../controllers/Invest-withdraw/approveWithW
 const { approveRecharge } = require('../controllers/recharge/approvedRecharge');
 const { upload } = require('../utils/updateProfileMiddleware');
 const updateProfile = require('../controllers/user/updateProfile');
+const { getAdminUser } = require('../controllers/admin/getAdmin');
 
-
-// router.use(protect);
-
-router.get('/profile', getUserProfile);
-router.get('/transactions', getUserTransactions);
-router.put('/vip-status', updateVipStatus);
 
 // upload invest
 router.post('/invest', InvestController);
@@ -64,13 +59,12 @@ router.post('/redeem-coupon', couponController.redeemUserCoupon);
 
 // dashboard admin route
 router.get("/getUsers", getAllUser)
+router.get('/getAdmin', getAdminUser);
 // user role update
 router.put("/update-role", updateUserRole);
 
 
-router.put(
-  '/profile',
-  updateProfile
+router.put('/profile',updateProfile
   // validate(userUpdateSchema),
 );
 

@@ -13,7 +13,7 @@ exports.register = async (req, res) => {
   try {
     const { username, phoneNumber, password, referralCode, profileImage } =
       req.body;
-    console.log(username, phoneNumber, password, referralCode, profileImage,16);
+    
 
     if(!username | !phoneNumber | !password| !referralCode |!profileImage){
       return res.status(400).json({
