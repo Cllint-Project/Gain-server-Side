@@ -76,11 +76,12 @@ exports.register = async (req, res) => {
       data: {
         _id: populatedUser._id,
         username: populatedUser.username,
+        role: populatedUser.role,
         profileImage: populatedUser.profileImage,
         phoneNumber: populatedUser.phoneNumber,
         referralCode: populatedUser.referralCode,
         referredBy: populatedUser.referredBy,
-        token,
+        token, // JWT token included here
       },
     });
   } catch (error) {
@@ -114,13 +115,14 @@ exports.login = async (req, res) => {
       data: {
         _id: user._id,
         username: user.username,
+        role: user.role,
         profileImage: user.profileImage,
         phoneNumber: user.phoneNumber,
         referralCode: user.referralCode,
         referredBy: user.referredBy,
         balance: user.balance,
         referralCount: user.referralCount,
-        token,
+        token, // JWT token included here
       },
     });
   } catch (error) {
