@@ -2,9 +2,10 @@ const { redeemCoupon, createCoupon } = require("./couponServices");
 
 const createSecretCoupon = async (req, res) => {
   try {
-    const { code, expirationMinutes = 5, adminId } = req.body;
-    // const adminId = req.user._id;
-    console.log(code, expirationMinutes, adminId);
+    const { code, expirationMinutes = 5 } = req.body;
+    const adminId = req.user._id; // Middleware থেকে adminId
+
+    console.log(code, expirationMinutes, adminId, "couponController");
     const coupon = await createCoupon(code, expirationMinutes, adminId);
 
     res.status(201).json({
@@ -26,9 +27,9 @@ const createSecretCoupon = async (req, res) => {
 
 const redeemUserCoupon = async (req, res) => {
   try {
-    const { code, userId } = req.body;
-    // const userId = req.user._id;
-console.log(code, userId,31)
+    const { code } = req.body;
+    const userId = req.user._id;
+    console.log(code, userId, 31);
     const updatedUser = await redeemCoupon(code, userId);
 
     res.status(200).json({
