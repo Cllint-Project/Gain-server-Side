@@ -3,8 +3,14 @@ const User = require("../../models/User");
 exports.getTeamByUserId = async (req, res) => {
   try {
     const userId = req.params.id;
-    // console.log(userId);
-    // Find the user
+    const tokenId = req.user._id;
+    
+    // console.log(tokenId.toString(),"..>>>>", userId.toString());
+    if (tokenId.toString() !== userId.toString()) {
+      return res.status(401).json({
+        message: "Not authorized. Invalid token.",
+      });
+    }
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -30,7 +36,14 @@ exports.getTeamByUserId = async (req, res) => {
 exports.getUserByUserId = async (req, res) => {
   try {
     const userId = req.params.userId;
-    // console.log(userId);
+    const tokenId = req.user._id;
+    // console.log(userId,"..>>>>", tokenId);
+    if (tokenId.toString() !== userId.toString()) {
+      return res.status(401).json({
+        message: "Not authorized. Invalid token.",
+      });
+    }
+
     // Find the user
     const user = await User.findOne({ _id: userId });
     if (!user) {

@@ -47,38 +47,38 @@ router.get("/get-invest-data/:Id", getAInvestDetailsController);
 
 
 // *************** user route ****************
-router.get("/get-recharge-data", protect,getRechargeController);
-router.get("/team/:id", protect, getTeamByUserId);
-router.get("/getUser/:userId", getUserByUserId);
+router.get("/get-recharge-data", protect,getRechargeController); // done
+router.get("/team/:id", protect, getTeamByUserId); // done
+router.get("/getUser/:userId",protect, getUserByUserId); // done
 // recharge related
-router.post("/claim-daily",protect, claimPackageIncome);
-router.get("/claim-daily/:Investor_id",protect, getMyPackages);
+router.post("/claim-daily",protect, claimPackageIncome); // done
+router.get("/claim-daily/:Investor_id",protect, getMyPackages); // done
 // User route to redeem coupon
-router.post("/redeem-coupon",protect, couponController.redeemUserCoupon);
+router.post("/redeem-coupon",protect, couponController.redeemUserCoupon); // done
 // invest by user
-router.post("/submit-invest", protect, submitInvestController);
+router.post("/submit-invest", protect, submitInvestController); // done
 // recharge
-router.post("/submit-recharge", protect, submitRechargeController);
+router.post("/submit-recharge", protect, submitRechargeController); // done
 //withdraw
-router.post("/withdraw",protect, createWithdraw);
+router.post("/withdraw",protect, createWithdraw); // done
 
 
 
 // *************** Admin route ***************
-router.get("/getUsers", protect, adminOnly, getAllUser);
-router.get("/get-AllRecharge-data",protect, adminOnly,  getAllRechargeController);
-router.post("/approve-recharge",protect, adminOnly,  approveRecharge);
+router.get("/getUsers", protect, adminOnly, getAllUser); // done
+router.get("/get-AllRecharge-data",protect, adminOnly,  getAllRechargeController); // done
+router.post("/approve-recharge",protect, adminOnly,  approveRecharge); // done
 // withdraw
-router.get("/getWithdraw",protect, getWithdrawals);
-router.put("/admin/withdraw/approve",protect, adminOnly, approveWithdraw);
+router.get("/getWithdraw",protect,adminOnly, getWithdrawals); // done
+router.put("/admin/withdraw/approve",protect, adminOnly, approveWithdraw); // done
 // Admin route to create secret coupon
-router.post("/admin/coupon",protect, adminOnly, couponController.createSecretCoupon);
+router.post("/admin/coupon",protect, adminOnly, couponController.createSecretCoupon); // done
 // user role update
-router.put("/update-role",protect, adminOnly, updateUserRole);
+router.put("/update-role",protect, adminOnly, updateUserRole); // done
 router.put(
   "/profile",
-  protect, adminOnly,
-  updateProfile
+  protect,
+  updateProfile // done
   // validate(userUpdateSchema),
 );
 

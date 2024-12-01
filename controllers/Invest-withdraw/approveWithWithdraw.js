@@ -4,8 +4,7 @@ const WithdrawModel = require("../../models/Withdraw");
 exports.approveWithdraw = async (req, res) => {
   try {
     const { user_id, withdraw_id, status } = req.body;
-console.log(req.body, 7)
-    // Check if withdrawal exists
+
     const withdraw = await WithdrawModel.findOne({ _id: withdraw_id });
     if (!withdraw) {
       return res.status(404).json({

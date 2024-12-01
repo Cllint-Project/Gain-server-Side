@@ -2,9 +2,8 @@ const User = require("../../models/User");
 
 // Controller to update user role
 exports.updateUserRole = async (req, res) => {
-  const { userId, newRole } = req.body;
-
-  console.log("role", userId, newRole);
+  const { newRole } = req.body;
+  const userId = req.user._id;
   try {
     // Check if the requester is an admin
     // const admin = await User.findById(adminId);

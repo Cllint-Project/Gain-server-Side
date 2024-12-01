@@ -22,10 +22,17 @@ const User = require("../models/User");
 exports.submitInvestController = async (req, res) => {
   try {
     const data = req.body;
-    console.log(data, 8);
+    // console.log(req.user._id?.toString(),"..>>>>", data.investor_id?.toString());
+    
+    // Check if `req.user._id` matches `investor_id`
+    if (req.user?._id.toString() !==  data?.investor_id?.toString()) {
+      return res.status(401).json({
+        message: "Not authorized. Invalid Investor ID.",
+      });
+    }
 
     // Find the user
-    const user = await User.findOne({ _id: data.investor_id });
+    const user = await User.findOne({ _id: data?.investor_id });
     if (!user) {
       return res.status(404).json({
         success: false,

@@ -8,6 +8,14 @@ exports.claimPackageIncome = async (req, res) => {
   try {
     const { investor_id, package_id } = req.body;
 
+    // console.log(req.user._id?.toString(),"..>>>>", investor_id?.toString());
+    
+    // Check if `req.user._id` matches `investor_id`
+    if (req.user._id.toString() !== investor_id?.toString()) {
+      return res.status(401).json({
+        message: "Not authorized. Invalid Claim ID.",
+      });
+    }
     // Find the specific package
     const package = await BuyPackageModel.findOne({ 
       _id: package_id,
@@ -232,6 +240,13 @@ exports.getMyPackages = async (req, res) => {
   try {
     const investor_id = req.params.Investor_id;
 
+
+    // Check if `req.user._id` matches `investor_id`
+    if (req.user._id.toString() !== investor_id.toString()) {
+      return res.status(401).json({
+        message: "Not authorized. Invalid investor ID.",
+      });
+    }
     // Find all packages for the investor
     const packages = await BuyPackageModel.find({ investor_id });
 

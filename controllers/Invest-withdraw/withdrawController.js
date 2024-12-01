@@ -4,7 +4,6 @@
 const User = require("../../models/User");
 const WithdrawModel = require("../../models/Withdraw");
 
-
 // const createWithdraw = async (req, res) => {
 //   try {
 //     const { user_id, amount, payment_method, account_number } = req.body;
@@ -65,18 +64,23 @@ const WithdrawModel = require("../../models/Withdraw");
 //   createWithdraw
 // };
 
-
-
 const createWithdraw = async (req, res) => {
   try {
     const { user_id, amount, payment_method, account_number } = req.body;
+    const tokenId = req?.user?._id;
 
-    console.log(req.body)
+    // Check if `req.user._id` matches `investor_id`
+    if (tokenId?.toString() !== user_id?.toString()) {
+      return res.status(401).json({
+        message: "Not authorized. Invalid Recharger ID.",
+      });
+    }
+
     // Check minimum withdraw amount
     if (amount < 160) {
       return res.status(400).json({
         success: false,
-        message: 'Minimum withdrawal amount is 160 TK'
+        message: "Minimum withdrawal amount is 160 TK",
       });
     }
 
@@ -85,14 +89,14 @@ const createWithdraw = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: "User not found",
       });
     }
 
     if (user.balance < amount) {
       return res.status(400).json({
         success: false,
-        message: 'Insufficient balance'
+        message: "Insufficient balance",
       });
     }
 
@@ -101,54 +105,60 @@ const createWithdraw = async (req, res) => {
       user_id,
       payment_method,
       account_number,
-      pending_balance: amount // Update pending balance
+      pending_balance: amount, // Update pending balance
     });
 
     res.status(201).json({
       success: true,
-      message: 'Withdrawal request created successfully. Status is pending.',
-      data: withdraw
+      message: "Withdrawal request created successfully. Status is pending.",
+      data: withdraw,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Failed to create withdrawal request',
-      error: error.message
+      message: "Failed to create withdrawal request",
+      error: error.message,
     });
   }
 };
 
-
 const getWithdrawals = async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, user_id } = req.query;
+    // console.log(req?.user?._id.toString(), "token _id");
+    // console.log(user_id, "user _id");
+    const tokenId = req?.user?._id;
+    // Check if `req.user._id` matches `investor_id`
+    if (tokenId?.toString() !== user_id?.toString()) {
+      return res.status(401).json({
+        message: "Not authorized. Invalid Recharger ID.",
+      });
+    }
+
     let query = {};
 
     // Add status filter if provided and not 'all'
-    if (status && status !== 'all') {
+    if (status && status !== "all") {
       query.status = status;
     }
 
-    const withdrawals = await WithdrawModel.find(query)
-      .sort({ createdAt: -1 }); // Sort by newest first
+    const withdrawals = await WithdrawModel.find(query).sort({ createdAt: -1 }); // Sort by newest first
 
     res.status(200).json({
       success: true,
-      message: 'Withdrawals retrieved successfully',
-      data: withdrawals
+      message: "Withdrawals retrieved successfully",
+      data: withdrawals,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch withdrawals',
-      error: error.message
+      message: "Failed to fetch withdrawals",
+      error: error.message,
     });
   }
 };
 
 module.exports = {
   createWithdraw,
-  getWithdrawals
+  getWithdrawals,
 };
