@@ -4,14 +4,14 @@ const User = require("../../models/User");
 exports.approveRecharge = async (req, res) => {
   try {
     const { investor_id, recharge_id, status } = req.body;
-    const tokenId = req?.user?._id;
+    // const tokenId = req?.user?._id;
     
-    // Check if `req.user._id` matches `investor_id`
-    if (tokenId?.toString() !==  investor_id?.toString()) {
-      return res.status(401).json({
-        message: "Not authorized. Invalid Recharger ID.",
-      });
-    }
+    // // Check if `req.user._id` matches `investor_id`
+    // if (tokenId?.toString() !==  investor_id?.toString()) {
+    //   return res.status(401).json({
+    //     message: "Not authorized. Invalid Recharger ID.",
+    //   });
+    // }
     // Check if recharge request exists
     const recharge = await MainRechargeModel.findOne({ _id: recharge_id });
     if (!recharge) {

@@ -2,8 +2,9 @@ const User = require("../../models/User");
 
 // Controller to update user role
 exports.updateUserRole = async (req, res) => {
-  const { newRole } = req.body;
-  const userId = req.user._id;
+  const { newRole, userId } = req.body;
+  // const userId = req.user._id;
+  // console.log(userId, newRole);
   try {
     // Check if the requester is an admin
     // const admin = await User.findById(adminId);
@@ -16,8 +17,9 @@ exports.updateUserRole = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-    if (user.role !== "admin" || user.role !== "normal-user")
-      return res.status(404).json({ message: "Invalid role found" });
+    // if (user.role !== "admin" || user.role !== "normal-user"){
+    //   return res.status(404).json({ message: "Invalid role found" });
+    // }
 
     user.role = newRole;
     await user.save();
