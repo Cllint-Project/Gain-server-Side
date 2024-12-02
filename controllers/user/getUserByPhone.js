@@ -3,15 +3,16 @@ const User = require("../../models/User");
 exports.getTeamByUserId = async (req, res) => {
   try {
     const userId = req.params.id;
-    const tokenId = req.user._id;
+    // const tokenId = req.user._id;
     
-    // console.log(tokenId.toString(),"..>>>>", userId.toString());
-    if (tokenId.toString() !== userId.toString()) {
-      return res.status(401).json({
-        message: "Not authorized. Invalid token.",
-      });
-    }
-    const user = await User.findById(userId);
+    // // console.log(tokenId.toString(),"..>>>>", userId.toString());
+    // if (tokenId.toString() !== userId.toString()) {
+    //   return res.status(401).json({
+    //     message: "Not authorized. Invalid token.",
+    //   });
+    // }
+    // console.log('our team', userId)
+    const user = await User.findOne({_id: userId}).select("-password");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -20,7 +21,7 @@ exports.getTeamByUserId = async (req, res) => {
     const teamMembers = await User.find({ referredBy: userId })
       .select("username phoneNumber balance createdAt profileImage")
       .sort({ createdAt: -1 });
-    console.log(teamMembers);
+    // console.log(teamMembers);
     res.status(200).json({
       userData: user,
       teamMembers,
@@ -33,17 +34,9 @@ exports.getTeamByUserId = async (req, res) => {
   }
 };
 
-exports.getUserByUserId = async (req, res) => {
+exports.getAdminByIdForUpdate = async (req, res) => {
   try {
     const userId = req.params.userId;
-    const tokenId = req.user._id;
-    // console.log(userId,"..>>>>", tokenId);
-    if (tokenId.toString() !== userId.toString()) {
-      return res.status(401).json({
-        message: "Not authorized. Invalid token.",
-      });
-    }
-
     // Find the user
     const user = await User.findOne({ _id: userId });
     if (!user) {

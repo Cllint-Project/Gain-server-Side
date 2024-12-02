@@ -15,6 +15,7 @@ const {
 const {
   getTeamByUserId,
   getUserByUserId,
+  getAdminByIdForUpdate,
 } = require("../controllers/user/getUserByPhone");
 const {
   getMyPackages,
@@ -47,39 +48,41 @@ router.get("/get-invest-data/:Id", getAInvestDetailsController);
 
 
 // *************** user route ****************
-router.get("/get-recharge-data", protect,getRechargeController); // done
-router.get("/team/:id", protect, getTeamByUserId); // done
-router.get("/getUser/:userId",protect, getUserByUserId); // done
+router.get("/get-recharge-data/:userId", protect,getRechargeController); // *** 
+router.get("/team/:id", protect, getTeamByUserId); // ***
+router.get("/getUser/:userId",protect,adminOnly, getAdminByIdForUpdate); // *** admin update profile
+
 // recharge related
-router.post("/claim-daily",protect, claimPackageIncome); // done
-router.get("/claim-daily/:Investor_id",protect, getMyPackages); // done
+router.post("/claim-daily",protect, claimPackageIncome); // **
+router.get("/claim-daily/:Investor_id",protect, getMyPackages); // **
 // User route to redeem coupon
-router.post("/redeem-coupon",protect, couponController.redeemUserCoupon); // done
+router.post("/redeem-coupon",protect, couponController.redeemUserCoupon); // **
 // invest by user
-router.post("/submit-invest", protect, submitInvestController); // done
+router.post("/submit-invest", protect, submitInvestController); // **
 // recharge
-router.post("/submit-recharge", protect, submitRechargeController); // done
+router.post("/submit-recharge", protect, submitRechargeController); // **
 //withdraw
-router.post("/withdraw",protect, createWithdraw); // done
+router.post("/withdraw",protect, createWithdraw); // **
 
 
 
 // *************** Admin route ***************
-router.get("/getUsers", protect, adminOnly, getAllUser); // done
-router.get("/get-AllRecharge-data",protect, adminOnly,  getAllRechargeController); // done
-router.post("/approve-recharge",protect, adminOnly,  approveRecharge); // done
+router.get("/getUsers", protect, adminOnly, getAllUser); // **
+router.get("/get-AllRecharge-data",protect, adminOnly,  getAllRechargeController); // **
+router.post("/approve-recharge",protect, adminOnly,  approveRecharge); // ***
 // withdraw
-router.get("/getWithdraw",protect,adminOnly, getWithdrawals); // done
-router.put("/admin/withdraw/approve",protect, adminOnly, approveWithdraw); // done
+router.get("/getWithdraw",protect,adminOnly, getWithdrawals); // **
+router.put("/admin/withdraw/approve",protect, adminOnly, approveWithdraw); // **
 // Admin route to create secret coupon
-router.post("/admin/coupon",protect, adminOnly, couponController.createSecretCoupon); // done
+router.post("/admin/coupon",protect, adminOnly, couponController.createSecretCoupon); // **
 // user role update
-router.put("/update-role",protect, adminOnly, updateUserRole); // done
+router.put("/update-role",protect, adminOnly, updateUserRole); // **
+
 router.put(
   "/profile",
   protect,
-  updateProfile // done
-  // validate(userUpdateSchema),
+  updateProfile
 );
+// kal korbo router.get("/getUser/:userId",protect,adminOnly, getAdminByIdForUpdate); // *** admin update profile
 
 module.exports = router;

@@ -3,13 +3,7 @@ const MainRechargeModel = require("../../models/MainRecharge");
 exports.submitRechargeController = async (req, res) => {
   try {
     const data = req.body;
-    const tokenId = req?.user?._id;
-    // Check if `req.user._id` matches `investor_id`
-    if (tokenId?.toString() !== data?.investor_id?.toString()) {
-      return res.status(401).json({
-        message: "Not authorized. Invalid Recharger ID.",
-      });
-    }
+    
 
     const user = await MainRechargeModel.create(data);
     res.json({
@@ -24,40 +18,40 @@ exports.submitRechargeController = async (req, res) => {
 
 exports.getRechargeController = async (req, res) => {
   try {
-    const { userId } = req.query;
-    const tokenId = req?.user?._id;
+    const userId = req.params.userId;
 
-    // console.log(tokenId.toString(),"..>>>>", userId.toString());
-    if (tokenId.toString() !== userId.toString()) {
-      return res.status(401).json({
-        message: "Not authorized. Invalid token",
+    // console.log("Requested User ID:", userId);
+
+    // Fetch user data from the database
+    const user = await MainRechargeModel.find({ investor_id: userId });
+
+    if (user.length === 0) {
+      // No data found for the given userId
+      return res.status(404).json({
+        success: false,
+        message: "No recharge data found for the specified user ID.",
       });
     }
 
-    const user = await MainRechargeModel.find({ investor_id: userId });
-
+    // Data found
     res.json({
-      message: "recharged data",
+      success: true,
+      message: "Recharge data retrieved successfully.",
       data: user,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    // Handle server-side errors
+    console.error("Error fetching recharge data:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error occurred.",
+      error: error.message,
+    });
   }
 };
-
 exports.getAllRechargeController = async (req, res) => {
   try {
-    const { status, user_id } = req?.query;
-    // console.log(req?.user?._id.toString(), "token _id");
-    // console.log(user_id, "user _id");
-
-    const tokenId = req?.user?._id;
-    // Check if `req.user._id` matches `investor_id`
-    if (tokenId?.toString() !== user_id?.toString()) {
-      return res.status(401).json({
-        message: "Not authorized. Invalid Recharger ID.",
-      });
-    }
+    const { status } = req?.query;
 
     let query = {};
 
@@ -69,6 +63,14 @@ exports.getAllRechargeController = async (req, res) => {
     const recharges = await MainRechargeModel.find(query).sort({
       createdAt: -1,
     }); // Sort by newest first
+
+    if (recharges.length === 0) {
+      // No data found for the given userId
+      return res.status(404).json({
+        success: false,
+        message: "No recharge data found.",
+      });
+    }
 
     res.status(200).json({
       success: true,

@@ -67,14 +67,6 @@ const WithdrawModel = require("../../models/Withdraw");
 const createWithdraw = async (req, res) => {
   try {
     const { user_id, amount, payment_method, account_number } = req.body;
-    const tokenId = req?.user?._id;
-
-    // Check if `req.user._id` matches `investor_id`
-    if (tokenId?.toString() !== user_id?.toString()) {
-      return res.status(401).json({
-        message: "Not authorized. Invalid Recharger ID.",
-      });
-    }
 
     // Check minimum withdraw amount
     if (amount < 160) {
@@ -124,17 +116,7 @@ const createWithdraw = async (req, res) => {
 
 const getWithdrawals = async (req, res) => {
   try {
-    const { status, user_id } = req.query;
-    // console.log(req?.user?._id.toString(), "token _id");
-    // console.log(user_id, "user _id");
-    const tokenId = req?.user?._id;
-    // Check if `req.user._id` matches `investor_id`
-    if (tokenId?.toString() !== user_id?.toString()) {
-      return res.status(401).json({
-        message: "Not authorized. Invalid Recharger ID.",
-      });
-    }
-
+    const { status } = req.query;
     let query = {};
 
     // Add status filter if provided and not 'all'
@@ -143,7 +125,6 @@ const getWithdrawals = async (req, res) => {
     }
 
     const withdrawals = await WithdrawModel.find(query).sort({ createdAt: -1 }); // Sort by newest first
-
     res.status(200).json({
       success: true,
       message: "Withdrawals retrieved successfully",

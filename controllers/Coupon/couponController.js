@@ -27,9 +27,7 @@ const createSecretCoupon = async (req, res) => {
 
 const redeemUserCoupon = async (req, res) => {
   try {
-    const { code } = req.body;
-    const userId = req.user._id;
-    // console.log(code, userId, 31);
+    const { code, userId } = req.body;
     const updatedUser = await redeemCoupon(code, userId);
 
     res.status(200).json({

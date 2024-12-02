@@ -4,15 +4,7 @@ const User = require("../../models/User");
 exports.approveRecharge = async (req, res) => {
   try {
     const { investor_id, recharge_id, status } = req.body;
-    // const tokenId = req?.user?._id;
     
-    // // Check if `req.user._id` matches `investor_id`
-    // if (tokenId?.toString() !==  investor_id?.toString()) {
-    //   return res.status(401).json({
-    //     message: "Not authorized. Invalid Recharger ID.",
-    //   });
-    // }
-    // Check if recharge request exists
     const recharge = await MainRechargeModel.findOne({ _id: recharge_id });
     if (!recharge) {
       return res.status(404).json({
@@ -20,7 +12,6 @@ exports.approveRecharge = async (req, res) => {
         message: "Recharge request not found",
       });
     }
-    console.log(recharge, 16);
 
     // Find the investor/user
     const user = await User.findOne({ _id: investor_id });
@@ -30,8 +21,6 @@ exports.approveRecharge = async (req, res) => {
         message: "Investor not found",
       });
     }
-
-    console.log(user, 27);
 
     if (status === "approved") {
       // Convert recharge amount to number and ensure it's valid
