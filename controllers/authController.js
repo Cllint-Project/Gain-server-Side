@@ -57,6 +57,7 @@ exports.register = async (req, res) => {
       // Set referrer
       newUser.referredBy = referrer._id;
       newUser.balance += 60;
+      newUser.bonus_balance += 60;
 
       // Update referrer's stats
       referrer.referralCount += 1;

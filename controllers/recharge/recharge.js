@@ -3,7 +3,6 @@ const MainRechargeModel = require("../../models/MainRecharge");
 exports.submitRechargeController = async (req, res) => {
   try {
     const data = req.body;
-    
 
     const user = await MainRechargeModel.create(data);
     res.json({
@@ -49,6 +48,37 @@ exports.getRechargeController = async (req, res) => {
     });
   }
 };
+
+exports.getRechargeLastDataController = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    const user = await MainRechargeModel.find({ investor_id: userId })
+      .sort({ createdAt: -1 })
+      .limit(1);
+
+    if (user.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No recharge data found for the specified user ID.",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Recharge data retrieved successfully.",
+      data: user[0], // Send the object directly
+    });
+  } catch (error) {
+    console.error("Error fetching recharge data:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error occurred.",
+      error: error.message,
+    });
+  }
+};
+
 exports.getAllRechargeController = async (req, res) => {
   try {
     const { status } = req?.query;

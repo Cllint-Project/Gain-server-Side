@@ -2,7 +2,7 @@ const Coupon = require("../../models/Coupon");
 const User = require("../../models/User");
 const { validateUserPackage } = require("./packageChecking");
 
-const createCoupon = async (code, expirationMinutes, adminId) => {
+const createCoupon = async (code, expirationMinutes, adminId,couponAmount) => {
   if (!code) {
     throw new Error("Coupon code is required");
   }
@@ -15,6 +15,7 @@ const createCoupon = async (code, expirationMinutes, adminId) => {
 
   const coupon = new Coupon({
     code,
+    couponAmount,
     isSecret: true,
     expiresAt,
     expirationMinutes,
@@ -24,44 +25,61 @@ const createCoupon = async (code, expirationMinutes, adminId) => {
   return await coupon.save();
 };
 
-const redeemCoupon = async (code, userId) => {
-  if (!code) {
-    throw new Error("Coupon code is required");
+const redeemCoupon = async (req, res) => {
+  try {
+    const { code } = req.body;
+    const userId = req.user._id;
+console.log(code,userId)
+    if (!code) {
+      return res.status(400).json({ message: "Coupon code is required" });
+    }
+
+    const coupon = await Coupon.findOne({ code });
+    if (!coupon) {
+      return res.status(404).json({ message: "Invalid coupon code" });
+    }
+
+    if (coupon.expiresAt < new Date()) {
+      return res.status(400).json({ message: "Coupon has expired" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const hasUsed = coupon.usages.some(
+      (usage) => usage.userId.toString() === userId.toString()
+    );
+
+    if (hasUsed) {
+      return res.status(400).json({ message: "You have already used this coupon" });
+    }
+
+    // Update user balance and bonus
+    user.balance += coupon.couponAmount;
+    user.bonus_balance += coupon.couponAmount;
+    user.lastBonusDate = new Date();
+    await user.save();
+
+    // Record coupon usage
+    coupon.usages.push({ userId });
+    await coupon.save();
+
+    res.status(200).json({
+      message: "Coupon redeemed successfully",
+      user: {
+        ...user.toObject(),
+        todayBonus: user.getTodayBonus()
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      message: "Error redeeming coupon", 
+      error: error.message 
+    });
   }
-
-  const coupon = await Coupon.findOne({ code });
-  if (!coupon) {
-    throw new Error("Invalid coupon code");
-  }
-
-  if (coupon.expiresAt < new Date()) {
-    throw new Error("Coupon has expired");
-  }
-
-  const hasUsed = coupon.usages.some(
-    (usage) => usage.userId.toString() === userId.toString()
-  );
-
-  if (hasUsed) {
-    throw new Error("You have already used this coupon");
-  }
-
-  // Validate user's package requirements
-  await validateUserPackage(userId);
-
-  // Update user balance and record coupon usage
-  const updatedUser = await User.findByIdAndUpdate(
-    userId,
-    { $inc: { balance: 40 } },
-    { new: true }
-  );
-
-  coupon.usages.push({ userId });
-  await coupon.save();
-
-  return updatedUser;
 };
-
 module.exports = {
   createCoupon,
   redeemCoupon,

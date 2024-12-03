@@ -30,6 +30,10 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  bonus_balance: {
+    type: Number,
+    default: 0
+  },
   referralCode: { 
     type: String,
     unique: true,
@@ -66,6 +70,17 @@ userSchema.pre('save', async function(next) {
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// Get today's bonus
+userSchema.methods.getTodayBonus = function() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const bonusDate = new Date(this.lastBonusDate);
+  bonusDate.setHours(0, 0, 0, 0);
+  
+  return bonusDate.getTime() === today.getTime() ? this.bonus_balance : 0;
 };
 
 const User = mongoose.model('User', userSchema);

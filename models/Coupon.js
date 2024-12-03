@@ -64,6 +64,11 @@ const couponSchema = new mongoose.Schema({
     unique: true,
     trim: true,
   },
+  couponAmount: {
+    type: Number,
+    required: true,
+    trim: true,
+  },
   isSecret: {
     type: Boolean,
     default: false,

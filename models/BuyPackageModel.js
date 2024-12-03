@@ -64,21 +64,25 @@ const rechargeSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  investor_name: {
+    type: String,
+    required: true
+  },
 
-  balance: {
-    type: Number,
-    default: 0
-  },
-  recharge_status: {
-    type: String,
-    enum: ['pending', 'success', 'failed'],
-    default: 'pending'
-  },
-  transaction_id: {
-    type: String,
-    required: true,
-    unique: true
-  },
+  // balance: {
+  //   type: Number,
+  //   default: 0
+  // },
+  // recharge_status: {
+  //   type: String,
+  //   enum: ['pending', 'success', 'failed'],
+  //   default: 'pending'
+  // },
+  // transaction_id: {
+  //   type: String,
+  //   required: true,
+  //   unique: true
+  // },
   machine_details: {
     type: machineDetailsSchema,
     required: true
