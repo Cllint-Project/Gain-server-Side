@@ -2,7 +2,7 @@ const Coupon = require("../../models/Coupon");
 const User = require("../../models/User");
 const { validateUserPackage } = require("./packageChecking");
 
-const createCoupon = async (code, expirationMinutes, adminId,couponAmount) => {
+const createCoupon = async (code, expirationMinutes, adminId, couponAmount) => {
   if (!code) {
     throw new Error("Coupon code is required");
   }
@@ -29,7 +29,7 @@ const redeemCoupon = async (req, res) => {
   try {
     const { code } = req.body;
     const userId = req.user._id;
-console.log(code,userId)
+
     if (!code) {
       return res.status(400).json({ message: "Coupon code is required" });
     }
@@ -56,11 +56,8 @@ console.log(code,userId)
       return res.status(400).json({ message: "You have already used this coupon" });
     }
 
-    // Update user balance and bonus
-    user.balance += coupon.couponAmount;
-    user.bonus_balance += coupon.couponAmount;
-    user.lastBonusDate = new Date();
-    await user.save();
+    // Add coupon amount to balance history and update balances
+    await user.addBalanceRecord(coupon.couponAmount, 'coupon');
 
     // Record coupon usage
     coupon.usages.push({ userId });
@@ -70,7 +67,8 @@ console.log(code,userId)
       message: "Coupon redeemed successfully",
       user: {
         ...user.toObject(),
-        todayBonus: user.getTodayBonus()
+        todayBonus: user.getTodayBonus(),
+        todayBalance: user.getTodayBalance()
       }
     });
   } catch (error) {

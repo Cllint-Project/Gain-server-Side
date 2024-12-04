@@ -1,33 +1,24 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
-// Generate JWT token
-const generateToken = (id,role) => {
-  // return jwt.sign({ id }, process.env.JWT_SECRET, {
-  //   expiresIn: "1d",
-  // });
+const generateToken = (id, role) => {
   return jwt.sign(
-    { id, role }, // Only _id and role in the token
+    { id, role },
     process.env.JWT_SECRET,
     { expiresIn: "1h" }
   );
 };
 
-
-
-// Register a new user
 exports.register = async (req, res) => {
   try {
-    const { username, phoneNumber, password, referralCode, profileImage } =
-      req.body;
+    const { username, phoneNumber, password, referralCode, profileImage } = req.body;
     
-// console.log(req.body)
-    if(!username | !phoneNumber | !password| !referralCode |!profileImage){
+    if(!username || !phoneNumber || !password || !referralCode || !profileImage) {
       return res.status(400).json({
         message: "Please fill all inputs",
       });
     }
-    // Check if user already exists
+
     const existingUser = await User.findOne({
       $or: [{ username }, { phoneNumber }],
     });
@@ -38,7 +29,6 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Create new user object (don't save yet)
     const newUser = new User({
       username,
       phoneNumber,
@@ -46,7 +36,6 @@ exports.register = async (req, res) => {
       profileImage,
     });
 
-    // Handle referral if code is provided
     if (referralCode) {
       const referrer = await User.findOne({ referralCode });
 
@@ -54,30 +43,19 @@ exports.register = async (req, res) => {
         return res.status(400).json({ message: "Invalid referral code" });
       }
 
-      // Set referrer
       newUser.referredBy = referrer._id;
-      newUser.balance += 60;
-      newUser.bonus_balance += 60;
+      await newUser.addBalanceRecord(60, 'referral');
 
-      // Update referrer's stats
       referrer.referralCount += 1;
-      // referrer.referralEarnings += 60; // Bonus amount for referral
-      // referrer.balance += 60;
-
       await referrer.save();
     }
 
-    // Save the new user
     await newUser.save();
 
-    // Generate token
     const token = generateToken(newUser._id, newUser.role);
 
-    // Get populated user data
-    const populatedUser = await User.findById(newUser._id).populate(
-      "referredBy",
-      "username referralCode"
-    );
+    const populatedUser = await User.findById(newUser._id)
+      .populate("referredBy", "username referralCode");
 
     res.status(201).json({
       success: true,
@@ -86,10 +64,11 @@ exports.register = async (req, res) => {
         username: populatedUser.username,
         role: populatedUser.role,
         profileImage: populatedUser.profileImage,
-        // phoneNumber: populatedUser.phoneNumber,
-        // referralCode: populatedUser.referralCode,
-        // referredBy: populatedUser.referredBy,
-        token, // JWT token included here
+        token,
+        todayBonus: populatedUser.todayBonus,
+        todayBalance: populatedUser.todayBalance,
+        balance: populatedUser.balance,
+        bonus_balance: populatedUser.bonus_balance
       },
     });
   } catch (error) {
@@ -101,12 +80,10 @@ exports.register = async (req, res) => {
   }
 };
 
-// Login user
 exports.login = async (req, res) => {
   try {
     const { phoneNumber, password } = req.body;
 
-    // Find user and populate referral info
     const user = await User.findOne({ phoneNumber }).populate(
       "referredBy",
       "username referralCode"
@@ -116,7 +93,7 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = generateToken(user._id,user?.role);
+    const token = generateToken(user._id, user.role);
 
     res.json({
       success: true,
@@ -125,11 +102,11 @@ exports.login = async (req, res) => {
         role: user.role,
         profileImage: user.profileImage,
         phoneNumber: user.phoneNumber,
-        // referralCode: user.referralCode,
-        // referredBy: user.referredBy,
-        // balance: user.balance,
-        // referralCount: user.referralCount,
-        token, // JWT token included here
+        token,
+        todayBonus: user.todayBonus,
+        todayBalance: user.todayBalance,
+        balance: user.balance,
+        bonus_balance: user.bonus_balance
       },
     });
   } catch (error) {
@@ -140,19 +117,29 @@ exports.login = async (req, res) => {
   }
 };
 
-// Controller function
 exports.getUserById = async (req, res) => {
   try {
-    console.log(req.params.id)
-    const user = await User.findById(req.params.id).select("-password");
-    console.log(user)
+    const user = await User.findById(req.params.id)
+      .select("-password -balanceHistory")
+      .populate("referredBy", "username referralCode");
+      
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.json({ data: user });
+
+    res.json({ 
+      success: true,
+      data: {
+        ...user.toObject(),
+        todayBonus: user.todayBonus,
+        todayBalance: user.todayBalance
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ 
+      success: false,
+      message: "Server error",
+      error: error.message 
+    });
   }
 };
-
-

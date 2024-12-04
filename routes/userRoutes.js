@@ -18,6 +18,7 @@ const {
   getUserByUserId,
   getAdminByIdForUpdate,
   getSingleUser,
+  getUserBalanceDetails,
 } = require("../controllers/user/getUserByPhone");
 const {
   getMyPackages,
@@ -68,7 +69,8 @@ router.post("/submit-recharge", protect, submitRechargeController); // **
 //withdraw
 router.post("/withdraw",protect, createWithdraw); // **
 
-
+// get user balance details
+router.get("/getUserBalanceDetails/:userId",protect, getUserBalanceDetails);
 
 // *************** Admin route ***************
 router.get("/getUsers", protect, adminOnly, getAllUser); // **

@@ -13,7 +13,6 @@ exports.approveRecharge = async (req, res) => {
       });
     }
 
-    // Find the investor/user
     const user = await User.findOne({ _id: investor_id });
     if (!user) {
       return res.status(404).json({
@@ -23,7 +22,6 @@ exports.approveRecharge = async (req, res) => {
     }
 
     if (status === "approved") {
-      // Convert recharge amount to number and ensure it's valid
       const rechargeAmount = Number(recharge.recharge_amount);
       if (isNaN(rechargeAmount)) {
         return res.status(400).json({
@@ -32,26 +30,22 @@ exports.approveRecharge = async (req, res) => {
         });
       }
 
-      // Add amount to user balance
-      const updatedUser = await User.findOneAndUpdate(
-        { _id: investor_id },
-        {
-          $inc: { balance: +rechargeAmount },
-        },
-        { new: true, runValidators: true }
-      );
+      // Add recharge record and update balance
+      await user.addBalanceRecord(rechargeAmount, 'package');
 
-      // Update recharge status
       recharge.recharge_status = "approved";
       await recharge.save();
 
       res.status(200).json({
         success: true,
         message: "Recharge request approved successfully",
-        data: recharge,
+        data: {
+          recharge,
+          todayBalance: user.getTodayBalance(),
+          todayBonus: user.getTodayBonus()
+        }
       });
     } else if (status === "rejected") {
-      // Update recharge status to rejected
       recharge.recharge_status = "rejected";
       await recharge.save();
 
