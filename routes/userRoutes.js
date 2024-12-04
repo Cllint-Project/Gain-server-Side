@@ -27,6 +27,7 @@ const {
 const {
   getWithdrawals,
   createWithdraw,
+  getWithdrawsHistory,
 } = require("../controllers/Invest-withdraw/withdrawController");
 const couponController = require("../controllers/Coupon/couponController");
 const { getAllUser, deleteUser } = require("../controllers/user/getAlluser");
@@ -68,9 +69,13 @@ router.post("/submit-invest", protect, submitInvestController); // **
 router.post("/submit-recharge", protect, submitRechargeController); // **
 //withdraw
 router.post("/withdraw",protect, createWithdraw); // **
+router.get("/getWithdraw",protect, getWithdrawsHistory); // **
 
 // get user balance details
 router.get("/getUserBalanceDetails/:userId",protect, getUserBalanceDetails);
+
+// lottery for user 
+
 
 // *************** Admin route ***************
 router.get("/getUsers", protect, adminOnly, getAllUser); // **
@@ -86,6 +91,8 @@ router.put("/admin/withdraw/approve",protect, adminOnly, approveWithdraw); // **
 router.post("/admin/coupon",protect, adminOnly, couponController.createSecretCoupon); // **
 // user role update
 router.put("/update-role",protect, adminOnly, updateUserRole); // **
+
+// lottery for admin
 
 router.put(
   "/profile",

@@ -6,7 +6,7 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
-// const miningRoutes = require('./routes/miningRoutes');
+const lotteryRoutes = require('./routes/lotteryRoutes');
 
 const app = express();
 
@@ -24,6 +24,7 @@ mongoose.connect(process.env.MONGODB_URI || '')
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/lottery', lotteryRoutes)
 // app.use('/api/mining', miningRoutes);
 
 app.get('/', async(req,res)=>{

@@ -68,6 +68,7 @@ const createWithdraw = async (req, res) => {
   try {
     const { user_id, amount, payment_method, account_number } = req.body;
 
+    console.log(req.body, 'createwithdraw')
     // Check minimum withdraw amount
     if (amount < 160) {
       return res.status(400).json({
@@ -138,8 +139,38 @@ const getWithdrawals = async (req, res) => {
     });
   }
 };
+const getWithdrawsHistory = async (req, res) => {
+  try {
+    const { status, userId } = req.query; 
+    let query = {};
+console.log(status, userId)
+    if (status && status !== "all") {
+      query.status = status;
+    }
+
+    if (userId) {
+      query.user_id = userId;
+    }
+
+    const withdrawals = await WithdrawModel.find(query).sort({ createdAt: -1 });
+    console.log('withdrawels', withdrawals)
+    res.status(200).json({
+      success: true,
+      message: "Withdrawals retrieved successfully",
+      data: withdrawals,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch withdrawals",
+      error: error.message,
+    });
+  }
+};
+
 
 module.exports = {
   createWithdraw,
   getWithdrawals,
+  getWithdrawsHistory
 };
