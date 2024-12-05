@@ -14,7 +14,11 @@ const lotterySchema = new mongoose.Schema({
   amount: {
     type: Number,
     required: true,
-    enum: [100, 200, 500]
+    enum: [100, 200,300, 500]
+  },
+  prizeAmount: {
+    type: Number,
+    default: 0
   },
   isWinner: {
     type: Boolean,

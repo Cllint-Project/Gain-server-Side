@@ -1,31 +1,21 @@
 const BuyPackageModel = require("../models/BuyPackageModel");
 const User = require("../models/User");
 
-// exports.submitInvestController = async (req, res) => {
-//     try {
-//       const data = req.body;
-//       console.log(data,8)
-//       const user = await BuyPackageModel.create(data);
-//       res.json({
-//         message: 'recharged successfully',
-//         // data: user
-//       });
-//     } catch (error) {
-//       res.status(500).json({ message: 'Server error', error: error.message });
-//     }
-// };
 
 exports.submitInvestController = async (req, res) => {
   try {
     const data = req.body;
     const user = await User.findOne({ _id: data?.investor_id });
+
     if (!user) {
       return res.status(404).json({
         success: false,
         message: "User not found",
       });
     }
+
     console.log("packagedata", data);
+
     // Convert investment amount to number and validate
     const investmentAmount = Number(data.machine_details.investment_amount);
     if (isNaN(investmentAmount)) {
@@ -43,17 +33,34 @@ exports.submitInvestController = async (req, res) => {
       });
     }
 
+    // Check for vipStatus and invest_limit conditions
+    if (data.machine_details.vipStatus === "vip" && data.machine_details.invest_limit === "3") {
+      if (user.referralCount < 3) {
+        return res.status(400).json({
+          success: false,
+          message: "This VIP machine requires at least 3 referrals to purchase.",
+        });
+      }
+      
+      // Check if user has already purchased 3 machines
+      const userPurchases = await BuyPackageModel.find({ investor_id: user._id, "machine_details.machine_name": data.machine_details.machine_name });
+
+      if (userPurchases.length >= 3) {
+        return res.status(400).json({
+          success: false,
+          message: "You can only purchase 3 of this VIP machine.",
+        });
+      }
+    }
+
     // Create the package purchase record
     const packagePurchase = await BuyPackageModel.create(data);
 
-    // Deduct the investment amount from user's balance
-    const updatedUser = await User.findOneAndUpdate(
-      { _id: data.investor_id },
-      {
-        $inc: { balance: -investmentAmount },
-      },
-      { new: true, runValidators: true }
-    );
+    // Deduct the investment amount from user's balance and update daily balance record
+    await user.addBalanceRecord(-investmentAmount, 'package'); // Use addBalanceRecord to update todayBalance and balance
+
+    // Fetch updated user data after balance record change
+    const updatedUser = await User.findById(user._id);
 
     res.status(200).json({
       success: true,
@@ -61,6 +68,7 @@ exports.submitInvestController = async (req, res) => {
       data: {
         package: packagePurchase,
         updatedBalance: updatedUser.balance,
+        todayBalance: updatedUser.todayBalance, // Return today's balance as well
       },
     });
   } catch (error) {
@@ -71,6 +79,8 @@ exports.submitInvestController = async (req, res) => {
     });
   }
 };
+
+
 
 exports.getUserPurchases = async (req, res) => {
   try {

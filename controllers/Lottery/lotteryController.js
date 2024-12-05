@@ -1,54 +1,54 @@
-const Lottery = require("../../models/Lottery/LotteryModel");
 const User = require("../../models/User");
+const Lottery = require("../../models/Lottery/LotteryModel");
 const { getCurrentWeekNumber } = require("../../utils/getCurrentWeekNumber");
+
 
 // Submit new lottery ticket
 exports.submitLottery = async (req, res) => {
   try {
     const { lotteryNumber, amount } = req.body;
-    const userId = req.user._id; // Assuming user is attached by auth middleware
-    console.log(lotteryNumber, amount, "lottery");
+    const userId = req.user._id;
+
     // Validate lottery number
     if (!/^\d{4}$/.test(lotteryNumber)) {
       return res.status(400).json({
         success: false,
-        message: "Lottery number must be exactly 4 digits",
+        message: 'Lottery number must be exactly 4 digits'
       });
     }
 
     // Validate amount
-    if (![100, 200, 500].includes(amount)) {
+    if (![100, 200,300, 500].includes(amount)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid amount. Must be 100, 200, or 500",
-      });
-    }
-
-    // Check if user has enough balance
-    const user = await User.findById(userId);
-    if (user.balance < amount) {
-      return res.status(400).json({
-        success: false,
-        message: "Insufficient balance",
+        message: 'Invalid amount. Must be 100, 200,300 or 500'
       });
     }
 
     // Get current week number and year
-    const currentDate = new Date();
     const weekNumber = getCurrentWeekNumber();
-    const year = currentDate.getFullYear();
+    const year = new Date().getFullYear();
 
     // Check if number already exists for current week
     const existingTicket = await Lottery.findOne({
       lotteryNumber,
       weekNumber,
-      year,
+      year
     });
 
     if (existingTicket) {
       return res.status(400).json({
         success: false,
-        message: "This lottery number is already taken for this week",
+        message: 'This lottery number is already taken for this week'
+      });
+    }
+
+    // Find user and check balance
+    const user = await User.findById(userId);
+    if (!user || user.balance < amount) {
+      return res.status(400).json({
+        success: false,
+        message: 'Insufficient balance'
       });
     }
 
@@ -58,24 +58,24 @@ exports.submitLottery = async (req, res) => {
       lotteryNumber,
       amount,
       weekNumber,
-      year,
+      year
     });
 
-    // Deduct amount from user's balance
-    await User.findByIdAndUpdate(userId, {
-      $inc: { balance: -amount },
-    });
+    // Deduct ticket amount from main balance only
+    await user.addBalanceRecord(-amount, 'lottery');
+
 
     res.status(201).json({
       success: true,
-      message: "Lottery ticket submitted successfully",
-      data: lottery,
+      message: 'Lottery ticket submitted successfully',
+      data: lottery
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to submit lottery ticket",
-      error: error.message,
+      message: 'Failed to submit lottery ticket',
+      error: error.message
     });
   }
 };
@@ -87,18 +87,19 @@ exports.getCurrentWeekLotteries = async (req, res) => {
     const year = new Date().getFullYear();
 
     const lotteries = await Lottery.find({ weekNumber, year })
-      .populate("user", "username")
-      .sort("-createdAt");
+      .populate('user', 'username')
+      .sort('-createdAt');
 
     res.status(200).json({
       success: true,
-      data: lotteries,
+      data: lotteries
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to fetch lottery entries",
-      error: error.message,
+      message: 'Failed to fetch lottery entries',
+      error: error.message
     });
   }
 };
@@ -112,69 +113,74 @@ exports.getPreviousWeekLotteries = async (req, res) => {
 
     const lotteries = await Lottery.find({
       weekNumber: previousWeek,
-      year,
+      year
     })
-      .populate("user", "username")
-      .sort("-createdAt");
+      .populate('user', 'username')
+      .sort('-createdAt');
 
     res.status(200).json({
       success: true,
-      data: lotteries,
+      data: lotteries
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to fetch previous week lottery entries",
-      error: error.message,
+      message: 'Failed to fetch previous week lottery entries',
+      error: error.message
     });
   }
 };
 
-// Select winner for current week
+
 exports.selectWinner = async (req, res) => {
   try {
     const weekNumber = getCurrentWeekNumber();
     const year = new Date().getFullYear();
 
-    // Get all tickets for current week
-    const tickets = await Lottery.find({ weekNumber, year, isWinner: false });
-
-    if (tickets.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "No eligible tickets found for this week",
-      });
-    }
-
-    // Randomly select winner
-    const winnerIndex = Math.floor(Math.random() * tickets.length);
-    const winner = tickets[winnerIndex];
-
-    // Update winner status
-    winner.isWinner = true;
-    await winner.save();
-
-    // Calculate prize amount (e.g., 10x the ticket amount)
-    const prizeAmount = winner.amount * 10;
-
-    // Update user balance
-    await User.findByIdAndUpdate(winner.user, {
-      $inc: { balance: prizeAmount },
+    const existingWinner = await Lottery.findOne({
+      weekNumber,
+      year,
+      isWinner: true
     });
 
+    if (existingWinner) {
+      throw new Error('Winner already selected for this week');
+    }
+
+    const tickets = await Lottery.find({ weekNumber, year, isWinner: false });
+    if (tickets.length === 0) {
+      throw new Error('No eligible tickets found for this week');
+    }
+
+    const winnerIndex = Math.floor(Math.random() * tickets.length);
+    const winner = tickets[winnerIndex];
+    const prizeAmount = winner.amount * 10;
+
+    winner.isWinner = true;
+    winner.prizeAmount = prizeAmount;
+    await winner.save();
+
+    const user = await User.findById(winner.user);
+    if (!user) {
+      throw new Error('Winner user not found');
+    }
+
+    // Add winning amount to both main and bonus balance using lottery_win type
+    await user.addBalanceRecord(prizeAmount, 'lottery_win');
+    await winner.populate('user', 'username');
+
+    
     res.status(200).json({
       success: true,
-      message: "Winner selected successfully",
-      winner: {
-        lotteryNumber: winner.lotteryNumber,
-        prizeAmount,
-      },
+      message: winner.lotteryNumber + 'is selected as a winner',
+      data: winner
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to select winner",
-      error: error.message,
+      message: 'Failed to select winner',
+      error: error.message
     });
   }
 };
@@ -184,56 +190,55 @@ exports.deleteLottery = async (req, res) => {
   try {
     const { id, lotteryNumber } = req.body;
 
-    // Find the lottery entry by id and lotteryNumber
-    const lottery = await Lottery.findOne({
-      _id: id,
-      lotteryNumber: lotteryNumber,
-    });
-
-    // Check if the lottery entry exists
+    const lottery = await Lottery.findOne({ _id: id, lotteryNumber });
     if (!lottery) {
       return res.status(404).json({
         success: false,
-        message: "Lottery entry not found",
+        message: 'Lottery entry not found'
       });
     }
-
 
     // Refund amount to user if ticket wasn't a winner
     if (!lottery.isWinner) {
-      await User.findByIdAndUpdate(lottery.user, {
-        $inc: { balance: lottery.amount },  // Refund the lottery amount to the user's balance
-      });
+      const user = await User.findById(lottery.user);
+      if (user) {
+        await user.addBalanceRecord(lottery.amount, 'lottery');
+      }
     }
 
-    await lottery.deleteOne({
-      _id: id,
-      lotteryNumber: lotteryNumber,
-    });
+    await lottery.deleteOne();
 
     res.status(200).json({
       success: true,
-      message: "Lottery entry deleted successfully",
+      message: 'Lottery entry deleted successfully'
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to delete lottery entry",
-      error: error.message,
+      message: 'Failed to delete lottery entry',
+      error: error.message
     });
   }
 };
 
-// In your lotteryController.js
+// Get weekly winner
 exports.getWeeklyWinner = async (req, res) => {
   try {
-    const weekNumber = getCurrentWeekNumber(); // Utility function
+    const weekNumber = getCurrentWeekNumber();
     const year = new Date().getFullYear();
 
-    const winner = await Lottery.findOne({ weekNumber, year, isWinner: true }).populate('user', 'username');
+    const winner = await Lottery.findOne({ 
+      weekNumber, 
+      year, 
+      isWinner: true 
+    }).populate('user', 'username');
 
     if (!winner) {
-      return res.status(404).json({ success: false, message: 'No winner selected yet' });
+      return res.status(404).json({ 
+        success: false, 
+        message: 'No winner selected yet' 
+      });
     }
 
     res.status(200).json({
@@ -241,11 +246,14 @@ exports.getWeeklyWinner = async (req, res) => {
       data: {
         lotteryNumber: winner.lotteryNumber,
         username: winner.user.username,
-        prizeAmount: winner.amount * 10, // Assuming the prize is 10x ticket amount
-      },
+        prizeAmount: winner.prizeAmount
+      }
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to fetch weekly winner', error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch weekly winner', 
+      error: error.message 
+    });
   }
 };
-

@@ -68,7 +68,6 @@ const createWithdraw = async (req, res) => {
   try {
     const { user_id, amount, payment_method, account_number } = req.body;
 
-    console.log(req.body, 'createwithdraw')
     // Check minimum withdraw amount
     if (amount < 160) {
       return res.status(400).json({

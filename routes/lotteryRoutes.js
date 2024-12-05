@@ -9,7 +9,7 @@ const router = express.Router();
 // User routes
 router.post('/submit',protect, submitLottery);
 // In lotteryRoutes.js
-router.get('/weekly-winner', getWeeklyWinner);
+router.get('/weekly-winner',protect, getWeeklyWinner);
 
 // Admin routes
 router.get('/current-week', protect, adminOnly, getCurrentWeekLotteries);

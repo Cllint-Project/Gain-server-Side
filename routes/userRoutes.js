@@ -42,14 +42,12 @@ const { protect, adminOnly } = require("../middleware/auth");
 const { redeemCoupon } = require("../controllers/Coupon/couponServices");
 
 // dashboard admin route
-router.get("/getAdmin", getAdminUser);
+router.get("/getAdmin",protect, getAdminUser);
 
 // invest package
 router.post("/invest", protect, adminOnly, InvestController);
-router.get("/get-invest-data", getInvestDataController);
-router.get("/get-invest-data/:Id", getAInvestDetailsController);
-
-
+router.get("/get-invest-data",protect, getInvestDataController);
+router.get("/get-invest-data/:Id",protect, getAInvestDetailsController);
 
 
 // *************** user route ****************
@@ -99,6 +97,5 @@ router.put(
   protect,
   updateProfile
 );
-// kal korbo router.get("/getUser/:userId",protect,adminOnly, getAdminByIdForUpdate); // *** admin update profile
 router.get("/getUser/:userId",protect,adminOnly, getAdminByIdForUpdate); // *** admin update profile
 module.exports = router;
