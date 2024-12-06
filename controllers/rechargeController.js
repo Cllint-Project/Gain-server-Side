@@ -1,7 +1,6 @@
 const BuyPackageModel = require("../models/BuyPackageModel");
 const User = require("../models/User");
 
-
 exports.submitInvestController = async (req, res) => {
   try {
     const data = req.body;
@@ -13,8 +12,6 @@ exports.submitInvestController = async (req, res) => {
         message: "User not found",
       });
     }
-
-    console.log("packagedata", data);
 
     // Convert investment amount to number and validate
     const investmentAmount = Number(data.machine_details.investment_amount);
@@ -34,16 +31,23 @@ exports.submitInvestController = async (req, res) => {
     }
 
     // Check for vipStatus and invest_limit conditions
-    if (data.machine_details.vipStatus === "vip" && data.machine_details.invest_limit === "3") {
+    if (
+      data.machine_details.vipStatus === "vip" &&
+      data.machine_details.invest_limit === "3"
+    ) {
       if (user.referralCount < 3) {
         return res.status(400).json({
           success: false,
-          message: "This VIP machine requires at least 3 referrals to purchase.",
+          message:
+            "This VIP machine requires at least 3 referrals to purchase.",
         });
       }
-      
+
       // Check if user has already purchased 3 machines
-      const userPurchases = await BuyPackageModel.find({ investor_id: user._id, "machine_details.machine_name": data.machine_details.machine_name });
+      const userPurchases = await BuyPackageModel.find({
+        investor_id: user._id,
+        "machine_details.machine_name": data.machine_details.machine_name,
+      });
 
       if (userPurchases.length >= 3) {
         return res.status(400).json({
@@ -56,10 +60,8 @@ exports.submitInvestController = async (req, res) => {
     // Create the package purchase record
     const packagePurchase = await BuyPackageModel.create(data);
 
-    // Deduct the investment amount from user's balance and update daily balance record
-    await user.addBalanceRecord(-investmentAmount, 'package'); // Use addBalanceRecord to update todayBalance and balance
+    await user.addBalanceRecord(-investmentAmount, "package"); 
 
-    // Fetch updated user data after balance record change
     const updatedUser = await User.findById(user._id);
 
     res.status(200).json({
@@ -68,7 +70,7 @@ exports.submitInvestController = async (req, res) => {
       data: {
         package: packagePurchase,
         updatedBalance: updatedUser.balance,
-        todayBalance: updatedUser.todayBalance, // Return today's balance as well
+        todayBalance: updatedUser.todayBalance,
       },
     });
   } catch (error) {
@@ -80,60 +82,65 @@ exports.submitInvestController = async (req, res) => {
   }
 };
 
-
-
 exports.getUserPurchases = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = 10;
-    const search = req.query.search || '';
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || "";
     const skip = (page - 1) * limit;
 
-    // Aggregate pipeline to group packages by user
     const aggregation = [
-      // Match based on search criteria
       {
         $match: {
           $or: [
-            { investor_name: { $regex: search, $options: 'i' } },
-            { phone_number: { $regex: search, $options: 'i' } }
-          ]
-        }
+            { investor_name: { $regex: search, $options: "i" } },
+            { phone_number: { $regex: search, $options: "i" } },
+          ],
+        },
       },
-      // Group by investor
       {
         $group: {
-          _id: '$investor_id',
-          name: { $first: '$investor_name' },
-          phone: { $first: '$phone_number' },
+          _id: "$investor_id",
+          name: { $first: "$investor_name" },
+          phone: { $first: "$phone_number" },
           packageCount: { $sum: 1 },
-          packages: { $push: '$$ROOT' }
-        }
+          packages: { $push: "$$ROOT" },
+        },
       },
-      // Sort by package count
       { $sort: { packageCount: -1 } },
-      // Get total count
       {
         $facet: {
-          metadata: [{ $count: 'total' }],
-          users: [{ $skip: skip }, { $limit: limit }]
-        }
-      }
+          metadata: [{ $count: "total" }],
+          users: [{ $skip: skip }, { $limit: limit }],
+        },
+      },
     ];
 
-    const result = await BuyPackageModel.aggregate(aggregation);
-    
-    const users = result[0].users;
-    const totalUsers = result[0].metadata[0]?.total || 0;
-    
+    const [result] = await BuyPackageModel.aggregate(aggregation);
+    const users = result?.users || [];
+    const total = result?.metadata[0]?.total || 0;
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No user packages found",
+      });
+    }
+
     res.status(200).json({
-      users,
-      hasMore: totalUsers > skip + limit
+      success: true,
+      message: "User packages retrieved successfully",
+      data: users,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      hasNextPage: page * limit < total,
+      hasPrevPage: page > 1,
     });
   } catch (error) {
-    res.status(500).json({ 
-      message: 'Error fetching user packages', 
-      error: error.message 
+    res.status(500).json({
+      message: "Error fetching user packages",
+      error: error.message,
     });
   }
 };

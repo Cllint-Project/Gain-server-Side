@@ -1,5 +1,5 @@
 const express = require('express');
-const { submitLottery, getCurrentWeekLotteries, getPreviousWeekLotteries, selectWinner, deleteLottery, getWeeklyWinner } = require('../controllers/Lottery/lotteryController');
+const { submitLottery, getCurrentWeekLotteries,  selectWinner, deleteLottery, getWeeklyWinner, getPreviousWeekLotteries } = require('../controllers/Lottery/lotteryController');
 const { protect, adminOnly } = require('../middleware/auth');
 
 
@@ -8,7 +8,6 @@ const router = express.Router();
 
 // User routes
 router.post('/submit',protect, submitLottery);
-// In lotteryRoutes.js
 router.get('/weekly-winner',protect, getWeeklyWinner);
 
 // Admin routes

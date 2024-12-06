@@ -17,30 +17,41 @@ exports.submitRechargeController = async (req, res) => {
 
 exports.getRechargeController = async (req, res) => {
   try {
-    const userId = req.params.userId;
+    const { status, userId } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-    // console.log("Requested User ID:", userId);
-
-    // Fetch user data from the database
-    const user = await MainRechargeModel.find({ investor_id: userId });
-
-    if (user.length === 0) {
-      // No data found for the given userId
-      return res.status(404).json({
-        success: false,
-        message: "No recharge data found for the specified user ID.",
-      });
+    let query = {};
+    if (status && status !== "all") {
+      query.recharge_status = status;
     }
 
-    // Data found
-    res.json({
+    if (userId) {
+      query.investor_id = userId;
+    }
+
+    const total = await MainRechargeModel.countDocuments(query);
+    const recharges = await MainRechargeModel.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    if (recharges.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No recharges data found",
+      });
+    }
+    res.status(200).json({
       success: true,
-      message: "Recharge data retrieved successfully.",
-      data: user,
+      message: "recharges retrieved successfully",
+      data: recharges,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
-    // Handle server-side errors
-    console.error("Error fetching recharge data:", error);
     res.status(500).json({
       success: false,
       message: "Server error occurred.",
@@ -82,20 +93,23 @@ exports.getRechargeLastDataController = async (req, res) => {
 exports.getAllRechargeController = async (req, res) => {
   try {
     const { status } = req?.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
     let query = {};
 
-    // Add status filter if provided and not 'all'
     if (status && status !== "all") {
       query.recharge_status = status;
     }
 
-    const recharges = await MainRechargeModel.find(query).sort({
-      createdAt: -1,
-    }); // Sort by newest first
+    const total = await MainRechargeModel.countDocuments(query);
+    const recharges = await MainRechargeModel.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     if (recharges.length === 0) {
-      // No data found for the given userId
       return res.status(404).json({
         success: false,
         message: "No recharge data found.",
@@ -104,8 +118,11 @@ exports.getAllRechargeController = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "recharges retrieved successfully",
+      message: "Recharges retrieved successfully",
       data: recharges,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
     res.status(500).json({

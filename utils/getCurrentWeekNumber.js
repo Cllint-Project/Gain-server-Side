@@ -5,7 +5,6 @@ exports.getCurrentWeekNumber = () => {
   const oneWeek = 1000 * 60 * 60 * 24 * 7;
   return Math.floor(diff / oneWeek);
 };
-
 exports.getPreviousWeekNumber = () => {
   return getCurrentWeekNumber() - 1;
 };

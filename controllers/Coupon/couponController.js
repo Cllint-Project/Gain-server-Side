@@ -3,9 +3,7 @@ const { createCoupon, redeemCoupon } = require("./couponServices");
 const createSecretCoupon = async (req, res) => {
   try {
     const { code, expirationMinutes = 2,  couponAmount } = req.body;
-    const adminId = req.user._id; // Middleware থেকে adminId
-    console.log(req.body);
-    // console.log(code, expirationMinutes, adminId, "couponController");
+    const adminId = req.user._id;
     const coupon = await createCoupon(
       code,
       expirationMinutes,

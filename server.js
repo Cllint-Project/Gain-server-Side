@@ -13,8 +13,6 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
-// Serve uploaded files statically
-// app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URI || '')
@@ -25,7 +23,6 @@ mongoose.connect(process.env.MONGODB_URI || '')
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/lottery', lotteryRoutes)
-// app.use('/api/mining', miningRoutes);
 
 app.get('/', async(req,res)=>{
   res.send('Gain is connected')

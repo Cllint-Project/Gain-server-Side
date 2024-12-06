@@ -8,14 +8,6 @@ exports.claimPackageIncome = async (req, res) => {
   try {
     const { investor_id, package_id } = req.body;
 
-    // console.log(req.user._id?.toString(),"..>>>>", investor_id?.toString());
-    
-    // Check if `req.user._id` matches `investor_id`
-    // if (req.user._id.toString() !== investor_id?.toString()) {
-    //   return res.status(401).json({
-    //     message: "Not authorized. Invalid Claim ID.",
-    //   });
-    // }
     // Find the specific package
     const package = await BuyPackageModel.findOne({ 
       _id: package_id,
@@ -98,13 +90,18 @@ exports.claimPackageIncome = async (req, res) => {
       throw new Error('User not found');
     }
 
+    // Use addBalanceRecord to update user balance and track daily totals
+    await updatedUser.addBalanceRecord(claimAmount, 'package');
+
     res.status(200).json({
       success: true,
       message: 'Daily income claimed successfully',
       data: {
         claimedAmount: claimAmount,
         newBalance: updatedUser.balance,
-        packageId: package_id
+        packageId: package_id,
+        todayBalance: updatedUser.todayBalance
+
       }
     });
   } catch (error) {

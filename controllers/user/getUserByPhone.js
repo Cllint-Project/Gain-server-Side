@@ -1,18 +1,11 @@
+const { default: mongoose } = require("mongoose");
 const User = require("../../models/User");
 
 exports.getTeamByUserId = async (req, res) => {
   try {
     const userId = req.params.id;
-    // const tokenId = req.user._id;
-    
-    // // console.log(tokenId.toString(),"..>>>>", userId.toString());
-    // if (tokenId.toString() !== userId.toString()) {
-    //   return res.status(401).json({
-    //     message: "Not authorized. Invalid token.",
-    //   });
-    // }
-    // console.log('our team', userId)
-    const user = await User.findOne({_id: userId}).select("-password");
+
+    const user = await User.findOne({ _id: userId }).select("-password");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -21,7 +14,6 @@ exports.getTeamByUserId = async (req, res) => {
     const teamMembers = await User.find({ referredBy: userId })
       .select("username phoneNumber balance createdAt profileImage")
       .sort({ createdAt: -1 });
-    // console.log(teamMembers);
     res.status(200).json({
       userData: user,
       teamMembers,
@@ -60,7 +52,7 @@ exports.getSingleUser = async (req, res) => {
   try {
     const userId = req.params.userId;
     // Find the user
-    const user = await User.findOne({ _id: userId }).select('-balanceHistory');
+    const user = await User.findOne({ _id: userId }).select("-balanceHistory");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -77,19 +69,45 @@ exports.getSingleUser = async (req, res) => {
     });
   }
 };
+
+
 exports.getUserBalanceDetails = async (req, res) => {
   try {
-    const userId = req.params.userId;
-    // Find the user
-    const user = await User.findOne({ _id: userId }).select('balanceHistory');
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    const { userId } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Use aggregation to handle array slicing
+    const result = await User.aggregate([
+      { $match: { _id: new mongoose.Types.ObjectId(userId) } }, 
+      {
+        $project: {
+          balanceHistory: {
+            $slice: ["$balanceHistory", skip, limit], 
+          },
+          totalBalanceHistory: { $size: "$balanceHistory" }, // Count total entries
+        },
+      },
+    ]);
+
+    if (!result || result.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No userBalanceHistory data found",
+      });
     }
 
+    const userBalanceHistory = result[0].balanceHistory;
+    const total = result[0].totalBalanceHistory;
+
     res.status(200).json({
-      message: "user balance data receive",
       success: true,
-      data: user,
+      message: "userBalanceHistory retrieved successfully",
+      data: userBalanceHistory,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
     res.status(500).json({

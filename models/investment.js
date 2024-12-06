@@ -34,16 +34,16 @@ const investmentSchema = new mongoose.Schema({
       },
     },
     invest_rate: {
-      type: String,  // or use Number if you prefer
+      type: String,  
       required: true,
     },
     invest_limit: {
-      type: String,  // or use Number if you prefer
+      type: String, 
       required: true,
     },
     vipStatus: {
       type: String,
-      enum: ['vip', 'normal'], // Ensures only 'vip' or 'normal' values are accepted
+      enum: ['vip', 'normal'], 
       required: true,
     }
   }, { timestamps: true });

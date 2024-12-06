@@ -6,11 +6,6 @@ const createCoupon = async (code, expirationMinutes, adminId, couponAmount) => {
   if (!code) {
     throw new Error("Coupon code is required");
   }
-
-  //   if (expirationMinutes < 1) {
-  //     throw new Error("Expiration time must be at least 1 minute");
-  //   }
-
   const expiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
 
   const coupon = new Coupon({

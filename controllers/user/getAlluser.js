@@ -2,14 +2,27 @@ const User = require("../../models/User");
 
 exports.getAllUser = async (req, res) => {
   try {
-    const users = await User.find({});
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const total = await User.countDocuments();
+    const users = await User.find({})
+      .skip(skip)
+      .limit(limit)
+      .select('-password');
+
     if (!users) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "Users not found" });
     }
+
     res.status(200).json({
       success: true,
-      message: 'get all users',
-      data: users
+      message: 'Users retrieved successfully',
+      data: users,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit)
     });
   } catch (error) {
     res.status(500).json({
@@ -20,7 +33,7 @@ exports.getAllUser = async (req, res) => {
 };
 exports.deleteUser = async (req, res) => {
   try {
-    const userId = req.params.userId; // userId ঠিকভাবে নিচ্ছি
+    const userId = req.params.userId;
 
     const user = await User.findOne({ _id: userId });
 
