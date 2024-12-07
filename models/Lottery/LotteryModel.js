@@ -24,6 +24,11 @@ const lotterySchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  
+  spinDate: {
+    type: Date,
+    default: Date.now
+  },
   weekNumber: {
     type: Number,
     required: true

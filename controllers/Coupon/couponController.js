@@ -1,8 +1,20 @@
+const Coupon = require("../../models/Coupon");
 const { createCoupon, redeemCoupon } = require("./couponServices");
 
 const createSecretCoupon = async (req, res) => {
   try {
-    const { code, expirationMinutes = 2,  couponAmount } = req.body;
+    const { code, expirationMinutes = 1,  couponAmount } = req.body;
+
+    // Check if coupon already exists
+    const existingCoupon = await Coupon.findOne({ code });
+    console.log(existingCoupon)
+    if (existingCoupon) {
+      return res.status(400).json({
+        success: false,
+        message: 'This coupon code already exists'
+      });
+    }
+    
     const adminId = req.user._id;
     const coupon = await createCoupon(
       code,
@@ -11,6 +23,7 @@ const createSecretCoupon = async (req, res) => {
       couponAmount
     );
 
+    
     res.status(201).json({
       success: true,
       message: "Secret coupon created successfully",

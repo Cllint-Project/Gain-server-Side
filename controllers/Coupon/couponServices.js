@@ -6,6 +6,7 @@ const createCoupon = async (code, expirationMinutes, adminId, couponAmount) => {
   if (!code) {
     throw new Error("Coupon code is required");
   }
+
   const expiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
 
   const coupon = new Coupon({
@@ -59,11 +60,12 @@ const redeemCoupon = async (req, res) => {
     await coupon.save();
 
     res.status(200).json({
+      success: true,
       message: "Coupon redeemed successfully",
-      user: {
-        ...user.toObject(),
+      data: {
         todayBonus: user.getTodayBonus(),
-        todayBalance: user.getTodayBalance()
+        todayBalance: user.getTodayBalance(),
+        couponAmount: coupon.couponAmount
       }
     });
   } catch (error) {

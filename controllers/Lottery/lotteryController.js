@@ -298,6 +298,7 @@ exports.getWeeklyWinner = async (req, res) => {
         lotteryNumber: winner.lotteryNumber,
         username: winner.user.username,
         prizeAmount: winner.prizeAmount,
+        spinDate: winner.spinDate,
       },
     });
   } catch (error) {
