@@ -1,3 +1,4 @@
+// calculate claim amount 
 const calculateClaimAmount = (dailyIncome, duration, totalClaims) => {
   // Check if package duration is over
   if (totalClaims >= duration) {
